@@ -16,19 +16,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   getEventIds() async {
     myEvents = (await authService.getMyEventIds()).documents.map((d) => d.documentID).toList();
+    setState(() => myEvents);
     print('Mine: '+myEvents.toString());
   }
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
     getEventIds();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      drawer: MyDrawer(),
+      drawer: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.7,
+        child: MyDrawer(),
+      ),
       appBar: AppBar(
         title: Text('DashBoard'),
-        actions: [
-          IconButton(icon: Icon(Icons.refresh), onPressed: () => setState(() => null),)
-        ],
       ),
       body: StreamBuilder(
         stream: authService.getEvents(),
@@ -113,7 +119,7 @@ class CustomCard extends StatelessWidget {
     );
   }
 
-  // _subscribe() {
-  //   authService.subscribeEvent(_event.id);
+  // _unSubscribe() {
+  //   authService.unSubscribeEvent(_event.id);
   // }
 }
