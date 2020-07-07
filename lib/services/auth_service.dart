@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:community_app/models/user.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -7,19 +8,24 @@ class AuthService {
   final _googleSignIn = GoogleSignIn();
   final _db = Firestore.instance;
 
-  Stream<FirebaseUser> user;
-
-  AuthService() {
-    user = _auth.onAuthStateChanged;
-
-    user.map((u) => u != null ? updateUserData(u) : null);
+  get user async {
+    FirebaseUser user = await _auth.currentUser();
+    return user;
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<dynamic> signInWithGoogle() async {
     final googleAuth = await (await _googleSignIn.signIn()).authentication;
-    await _auth.signInWithCredential(GoogleAuthProvider.getCredential(
-        idToken: googleAuth.idToken, accessToken: googleAuth.accessToken));
-    updateUserData(await _auth.currentUser());
+    final authResult = await _auth.signInWithCredential(
+      GoogleAuthProvider.getCredential(
+          idToken: googleAuth.idToken, accessToken: googleAuth.accessToken),
+    );
+
+    if (authResult.additionalUserInfo.isNewUser)
+      _createUserData(authResult.user);
+    else
+      _updateLastSeen(authResult.user);
+    
+    return this.user;
   }
 
   Future<void> signOut() async {
@@ -27,21 +33,25 @@ class AuthService {
     await _auth.signOut();
   }
 
-  updateUserData(FirebaseUser user) async {
-    DocumentReference ref = _db.collection('users').document(user.uid);
-
-    ref.setData({
-      'displayName': user.displayName ?? user.email,
+  _createUserData(FirebaseUser user) async {
+    await _db.collection('users').document(user.uid).setData({
+      'display_name': user.displayName ?? user.email,
       'email': user.email,
-      'photoURL': user.photoUrl,
-      'uid': user.uid,
-      'lastSeen': DateTime.now()
+      'photo_url': user.photoUrl,
+      'last_seen': DateTime.now() // TODO: change to server time
     }, merge: true);
   }
 
-  Future<FirebaseUser> getUser() async {
-    FirebaseUser user = await _auth.currentUser();
-    return user;
+  _updateLastSeen(FirebaseUser user) async {
+    _db
+        .collection('users')
+        .document(user.uid)
+        .setData({'last_seen': DateTime.now()}, merge: true);
+  }
+
+  Future<User> getUser(String uid) async {
+    final userData = await _db.collection('users').document(uid).get();
+    return User.from(userData);
   }
 
   Stream<QuerySnapshot> getEvents() {
@@ -54,28 +64,37 @@ class AuthService {
       'title': title,
       'content': content,
       'date': date,
-      'user_name': user.displayName,
-      'photo_url': user.photoUrl,
+      'user_id': user.uid,
     });
   }
 
-  subscribeEvent(String eventId) async {
-    FirebaseUser user = await _auth.currentUser();
-    await _db
-        .collection('users')
-        .document(user.uid)
-        .collection('events')
-        .document(eventId)
-        .setData({'time': Timestamp.now()});
-  }
-
-  Future<QuerySnapshot> getMyEventIds() async {
+  Future subscribeEvent(String eventId) async {
     FirebaseUser user = await _auth.currentUser();
     return await _db
-        .collection('users')
+        .collection('subscriptions')
         .document(user.uid)
         .collection('events')
-        .getDocuments();
+        .document(eventId).setData({});
+  }
+  
+  Future unSubscribeEvent(String eventId) async {
+    FirebaseUser user = await _auth.currentUser();
+    return await _db
+        .collection('subscriptions')
+        .document(user.uid)
+        .collection('events')
+        .document(eventId).delete();
+  }
+
+  Future<List<String>> getMyEventIds() async {
+    FirebaseUser user = await _auth.currentUser();
+    List<DocumentSnapshot> docs = (await _db
+            .collection('subscriptions')
+            .document(user.uid)
+            .collection('events')
+            .getDocuments())
+        .documents;
+    return docs.map<String>((e) => e.documentID).toList();
   }
 }
 

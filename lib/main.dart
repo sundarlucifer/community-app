@@ -22,10 +22,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // TODO: Remove stream and change login logic
     return MaterialApp(
-      home: StreamBuilder(
-        stream: authService.user,
+      home: FutureBuilder(
+        future: authService.user,
         builder: (context, snapshot) {
-          return snapshot.hasData ? HomeScreen() : LoginScreen();
+          if(snapshot.connectionState == ConnectionState.done)
+            return snapshot.hasData ? HomeScreen() : LoginScreen();
+          else
+            return LoadingScreen();
         },
       ),
       routes: _routes,

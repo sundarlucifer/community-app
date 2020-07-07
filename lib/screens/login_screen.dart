@@ -4,11 +4,13 @@ import 'package:community_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {
-
   static const TAG = 'login-screen';
 
   _signIn(context) {
-    authService.signInWithGoogle();
+    authService.signInWithGoogle().then((u) {
+      if (u != null) Navigator.pushReplacementNamed(context, HomeScreen.TAG);
+      print(u);
+    });
   }
 
   @override

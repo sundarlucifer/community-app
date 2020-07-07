@@ -1,19 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:community_app/models/user.dart';
 
 class Event {
   String id;
   String title;
   String content;
   DateTime date;
+  String userId;
   String userName;
-  String photoUrl; // TODO: Change to uid and get data from cloud
+  String photoUrl;
 
-  Event(DocumentSnapshot snapshot) {
-    id = snapshot.documentID;
-    title = snapshot['title'];
-    content = snapshot['content'];
-    date = snapshot['date'].toDate();
-    userName = snapshot['user_name'];
-    photoUrl = snapshot['photo_url'];
+  static Event from(DocumentSnapshot snapshot, User user) {
+    Event event = Event();
+    event.id = snapshot.documentID;
+    event.title = snapshot['title'];
+    event.content = snapshot['content'];
+    event.date = snapshot['date'].toDate();
+    event.userId = snapshot['user_id'];
+    event.userName = user.displayName;
+    event.photoUrl = user.photoUrl;
+    return event;
   }
 }
