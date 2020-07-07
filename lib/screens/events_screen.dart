@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:community_app/models/event.dart';
+import 'package:community_app/models/user.dart';
 import 'package:community_app/screens/add_event_screen.dart';
 import 'package:community_app/services/auth_service.dart';
 import 'package:community_app/utils/drawer.dart';
@@ -15,6 +16,18 @@ class EventsScreen extends StatefulWidget {
 class _EventsScreenState extends State<EventsScreen> {
   List<String> myEvents = [];
 
+  fetchMySubs() async {
+    myEvents.clear();
+    myEvents.addAll(await authService.getMyEventIds());
+    setState(() => myEvents = myEvents);
+  }
+
+  @override
+  void initState() {
+    fetchMySubs();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,7 +42,7 @@ class _EventsScreenState extends State<EventsScreen> {
       ),
       body: StreamBuilder(
         stream: authService.getEvents(),
-        builder: (context, snapshot) {
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
@@ -37,29 +50,95 @@ class _EventsScreenState extends State<EventsScreen> {
             case ConnectionState.waiting:
               return Center(child: CircularProgressIndicator());
             default:
+              print('first: ${snapshot.data.documents.length}');
+              if (!snapshot.hasData) return Text('loading');
               return ListView(
                 children: snapshot.data.documents
-                    .map<Widget>((DocumentSnapshot document) {
-                  return CustomCard(
-                    document: document,
-                  );
-                }).toList(),
+                    .map((doc) => FutureBuilder(
+                          future: authService.getUser(doc.data['user_id']),
+                          builder: (context, AsyncSnapshot<User> snapshot) {
+                            print(snapshot.data);
+                            if (snapshot.connectionState ==
+                                    ConnectionState.done &&
+                                snapshot.hasData) {
+                              final event = Event.from(doc, snapshot.data);
+                              return _buildCard(event);
+                            }
+                            return Center();
+                          },
+                        ))
+                    .toList(),
+                // snapshot.data.documents
+                //     .map<Widget>((DocumentSnapshot document) async {
+                //   final user =
+                //       await authService.getUser(document.data['user_id']);
+                //   final event = Event.from(document, user);
+                //   return CustomCard(event: event);
+                // }).toList(),
               );
           }
         },
       ),
     );
   }
+
+  Widget _buildCard(Event event) {
+    return Card(
+      elevation: 8.0,
+      margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 15.0),
+      child: Container(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    child: Image.network(event.photoUrl),
+                  ),
+                  SizedBox(width: 10.0),
+                  Text(event.userName),
+                ],
+              ),
+              SizedBox(height: 12.0),
+              Text(
+                event.title,
+                style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w600),
+              ),
+              Divider(
+                thickness: 2.0,
+              ),
+              SizedBox(height: 8.0),
+              Text(event.content),
+              SizedBox(height: 8.0),
+              Text('Event date: ' + event.date.toString().substring(0, 10)),
+              Divider(
+                thickness: 2.0,
+              ),
+              myEvents.contains(event.id)
+                  ? Text('Subscribed! Available in dashboard')
+                  : RaisedButton(
+                      child: Text('Subscribe'),
+                      onPressed: () => _subscribe(event),
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  _subscribe(Event event) async {
+    await authService.subscribeEvent(event.id);
+    fetchMySubs();
+  }
 }
 
 class CustomCard extends StatelessWidget {
-  final Event _event;
+  final Event event;
 
-  CustomCard({
-    Key key,
-    @required DocumentSnapshot document,
-  })  : _event = Event(document),
-        super(key: key);
+  const CustomCard({Key key, this.event}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -81,24 +160,24 @@ class CustomCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                child: Image.network(_event.photoUrl),
+                child: Image.network(event.photoUrl),
               ),
               SizedBox(width: 10.0),
-              Text(_event.userName),
+              Text(event.userName),
             ],
           ),
           SizedBox(height: 12.0),
           Text(
-            _event.title,
+            event.title,
             style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w600),
           ),
           Divider(
             thickness: 2.0,
           ),
           SizedBox(height: 8.0),
-          Text(_event.content),
+          Text(event.content),
           SizedBox(height: 8.0),
-          Text('Event date: ' + _event.date.toString().substring(0, 10)),
+          Text('Event date: ' + event.date.toString().substring(0, 10)),
           RaisedButton(
             child: Text('Subscribe'),
             onPressed: _subscribe,
@@ -109,6 +188,6 @@ class CustomCard extends StatelessWidget {
   }
 
   _subscribe() {
-    authService.subscribeEvent(_event.id);
+    authService.subscribeEvent(event.id);
   }
 }

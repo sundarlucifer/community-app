@@ -17,7 +17,7 @@ class _MyDrawerState extends State<MyDrawer> {
 
   @override
   void initState() {
-    authService.getUser().then((user) {
+    authService.user.then((user) {
       setState(() {
         _userName = user.displayName;
         _userMail = user.email;
