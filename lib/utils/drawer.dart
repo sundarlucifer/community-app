@@ -17,12 +17,11 @@ class _MyDrawerState extends State<MyDrawer> {
 
   @override
   void initState() {
-    authService.getUser().then((user){
+    authService.getUser().then((user) {
       setState(() {
         _userName = user.displayName;
         _userMail = user.email;
-        if(user.photoUrl != '')
-          _userPhoto = Image.network(user.photoUrl);
+        if (user.photoUrl != '') _userPhoto = Image.network(user.photoUrl);
       });
     });
     super.initState();
@@ -38,28 +37,32 @@ class _MyDrawerState extends State<MyDrawer> {
             accountEmail: Text(_userMail ?? ''),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
-              child:  _userPhoto,
+              child: _userPhoto,
             ),
           ),
           ListTile(
             title: Text('DashBoard'),
             trailing: Icon(Icons.dashboard),
-            onTap: () => Navigator.pushReplacementNamed(context, HomeScreen.TAG),
+            onTap: () =>
+                Navigator.pushReplacementNamed(context, HomeScreen.TAG),
           ),
           ListTile(
             title: Text('Events'),
             trailing: Icon(Icons.event_note),
-            onTap: () => Navigator.pushReplacementNamed(context, EventsScreen.TAG),
+            onTap: () =>
+                Navigator.pushReplacementNamed(context, EventsScreen.TAG),
           ),
           ListTile(
             title: Text('Profile'),
             trailing: Icon(Icons.person),
-            onTap: () => Navigator.pushReplacementNamed(context, ProfileScreen.TAG),
+            onTap: () =>
+                Navigator.pushReplacementNamed(context, ProfileScreen.TAG),
           ),
           ListTile(
             title: Text('Sign Out'),
             trailing: Icon(Icons.exit_to_app),
-            onTap: () => authService.signOut().then((_) => Navigator.pushReplacementNamed(context, LoginScreen.TAG)),
+            onTap: () => authService.signOut().then((_) =>
+                Navigator.pushReplacementNamed(context, LoginScreen.TAG)),
           ),
         ],
       ),

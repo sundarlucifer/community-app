@@ -11,21 +11,21 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-
- final _routes = <String, WidgetBuilder>{
-   HomeScreen.TAG : (_) => HomeScreen(),
-   EventsScreen.TAG : (_) => EventsScreen(),
-   ProfileScreen.TAG : (_) => ProfileScreen(),
-   LoginScreen.TAG : (_) => LoginScreen(),
- };
+  final _routes = <String, WidgetBuilder>{
+    HomeScreen.TAG: (_) => HomeScreen(),
+    EventsScreen.TAG: (_) => EventsScreen(),
+    ProfileScreen.TAG: (_) => ProfileScreen(),
+    LoginScreen.TAG: (_) => LoginScreen(),
+  };
 
   @override
   Widget build(BuildContext context) {
+    // TODO: Remove stream and change login logic
     return MaterialApp(
       home: StreamBuilder(
         stream: authService.user,
         builder: (context, snapshot) {
-            return snapshot.hasData ? HomeScreen() : LoginScreen();
+          return snapshot.hasData ? HomeScreen() : LoginScreen();
         },
       ),
       routes: _routes,

@@ -1,15 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Event{
-
+class Event {
   String id;
   String title;
   String content;
   DateTime date;
   String userName;
-  String photoUrl;
+  String photoUrl; // TODO: Change to uid and get data from cloud
 
-  Event(DocumentSnapshot snapshot){
+  Event(DocumentSnapshot snapshot) {
     id = snapshot.documentID;
     title = snapshot['title'];
     content = snapshot['content'];
@@ -17,5 +16,4 @@ class Event{
     userName = snapshot['user_name'];
     photoUrl = snapshot['photo_url'];
   }
-
 }

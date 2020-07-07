@@ -2,7 +2,6 @@ import 'package:community_app/utils/drawer.dart';
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatelessWidget {
-
   static const TAG = 'profile-screen';
 
   @override
@@ -10,7 +9,7 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       drawer: MyDrawer(),
       appBar: AppBar(
-        title: Text('Events'),
+        title: Text('Profile'),
       ),
       body: Center(child: Text('Profile Screen')),
     );

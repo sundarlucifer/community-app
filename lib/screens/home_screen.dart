@@ -15,9 +15,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<String> myEvents = [];
 
   getEventIds() async {
-    myEvents = (await authService.getMyEventIds()).documents.map((d) => d.documentID).toList();
+    myEvents = (await authService.getMyEventIds())
+        .documents
+        .map((d) => d.documentID)
+        .toList();
     setState(() => myEvents);
-    print('Mine: '+myEvents.toString());
+    print('Mine: ' + myEvents.toString());
   }
 
   @override
@@ -46,10 +49,11 @@ class _HomeScreenState extends State<HomeScreen> {
             case ConnectionState.waiting:
               return Center(child: CircularProgressIndicator());
             default:
-            print(snapshot.data.documents.map((d) => d.documentID));
+              print(snapshot.data.documents.map((d) => d.documentID));
               return ListView(
                 children: snapshot.data.documents
-                    .where((DocumentSnapshot snap) => myEvents.contains(snap.documentID))
+                    .where((DocumentSnapshot snap) =>
+                        myEvents.contains(snap.documentID))
                     .map<Widget>((DocumentSnapshot document) {
                   return CustomCard(
                     document: document,

@@ -5,9 +5,14 @@ import 'package:community_app/services/auth_service.dart';
 import 'package:community_app/utils/drawer.dart';
 import 'package:flutter/material.dart';
 
-class EventsScreen extends StatelessWidget {
+class EventsScreen extends StatefulWidget {
   static const TAG = 'events-screen';
 
+  @override
+  _EventsScreenState createState() => _EventsScreenState();
+}
+
+class _EventsScreenState extends State<EventsScreen> {
   List<String> myEvents = [];
 
   @override
@@ -15,11 +20,12 @@ class EventsScreen extends StatelessWidget {
     return Scaffold(
       drawer: MyDrawer(),
       appBar: AppBar(
-        title: Text('DashBoard'),
+        title: Text('Events'),
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EventForm())),
+        onPressed: () => Navigator.push(
+            context, MaterialPageRoute(builder: (context) => EventForm())),
       ),
       body: StreamBuilder(
         stream: authService.getEvents(),
@@ -82,12 +88,17 @@ class CustomCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12.0),
-          Text(_event.title, style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w600),),
-          Divider(thickness: 2.0,),
+          Text(
+            _event.title,
+            style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w600),
+          ),
+          Divider(
+            thickness: 2.0,
+          ),
           SizedBox(height: 8.0),
           Text(_event.content),
           SizedBox(height: 8.0),
-          Text('Event date: ' + _event.date.toString().substring(0,10)),
+          Text('Event date: ' + _event.date.toString().substring(0, 10)),
           RaisedButton(
             child: Text('Subscribe'),
             onPressed: _subscribe,

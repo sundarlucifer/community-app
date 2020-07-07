@@ -32,44 +32,46 @@ class _EventFormState extends State<EventForm> {
         iconTheme: IconThemeData(color: Theme.of(context).primaryColor),
       ),
       body: _isLoading
-      ? Center(child: CircularProgressIndicator())
-      : SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(12.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  decoration: InputDecoration(labelText: 'Title'),
-                  maxLength: 30,
-                  validator: (value) => value.isEmpty ? 'Enter a title' : null,
-                  controller: _titleController,
-                ),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Content',
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        decoration: InputDecoration(labelText: 'Title'),
+                        maxLength: 30,
+                        validator: (value) =>
+                            value.isEmpty ? 'Enter a title' : null,
+                        controller: _titleController,
+                      ),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Content',
+                        ),
+                        maxLines: 10,
+                        maxLength: 100,
+                        validator: (value) =>
+                            value.isEmpty ? 'Enter content' : null,
+                        controller: _contentController,
+                      ),
+                      _getDateField(),
+                      SizedBox(height: 20.0),
+                      Text(_errorMsg),
+                      OutlineButton(
+                        child: Container(
+                          width: double.infinity,
+                          child: Center(child: Text('Post event')),
+                        ),
+                        onPressed: _submit,
+                      ),
+                    ],
                   ),
-                  maxLines: 10,
-                  maxLength: 100,
-                  validator: (value) => value.isEmpty ? 'Enter content' : null,
-                  controller: _contentController,
                 ),
-                _getDateField(),
-                SizedBox(height: 20.0),
-                Text(_errorMsg),
-                OutlineButton(
-                  child: Container(
-                    width: double.infinity,
-                    child: Center(child: Text('Post event')),
-                  ),
-                  onPressed: _submit,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -101,18 +103,21 @@ class _EventFormState extends State<EventForm> {
             lastDate: DateTime.now().add(Duration(days: 365)))
         .then((date) {
       setState(() {
-        _date = date ?? DateTime.now().add(Duration(days: 1));
+        _date = date ?? _date;
       });
     });
   }
 
   _submit() {
-    if(!_formKey.currentState.validate()) {
+    if (!_formKey.currentState.validate()) {
       return;
     }
     setState(() => _isLoading = true);
-    authService.postEvent(_titleController.text, _contentController.text, Timestamp.fromDate(_date)).then((ref) {
-      if(ref != null)
+    authService
+        .postEvent(_titleController.text, _contentController.text,
+            Timestamp.fromDate(_date))
+        .then((ref) {
+      if (ref != null)
         Navigator.pop(context);
       else
         setState(() => _errorMsg = 'Network error');

@@ -74,7 +74,8 @@ class AuthService {
     return await _db
         .collection('users')
         .document(user.uid)
-        .collection('events').getDocuments();
+        .collection('events')
+        .getDocuments();
   }
 }
 
