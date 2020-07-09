@@ -68,13 +68,6 @@ class _EventsScreenState extends State<EventsScreen> {
                           },
                         ))
                     .toList(),
-                // snapshot.data.documents
-                //     .map<Widget>((DocumentSnapshot document) async {
-                //   final user =
-                //       await authService.getUser(document.data['user_id']);
-                //   final event = Event.from(document, user);
-                //   return CustomCard(event: event);
-                // }).toList(),
               );
           }
         },
