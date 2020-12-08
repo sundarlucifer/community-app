@@ -112,7 +112,10 @@ class _PostScreenState extends State<PostScreen> {
           if(authService.user.uid == post.userId)
             FlatButton(
               child: Text('Delete post'),
-              onPressed: () => authService.deletePost(post.id),
+              onPressed: () {
+                authService.deletePost(post.id);
+                Navigator.pop(context);
+              },
             )
           else
             Text('No options available for this post')
