@@ -54,6 +54,11 @@ class AuthService {
         .setData({'last_seen': DateTime.now()}, merge: true);
   }
 
+  updateDisplayName(String name) async {
+    _db.collection('users').document(user.uid).setData({'display_name': name},
+        merge: true).then((value) async => user = await getUser(user.uid));
+  }
+
   Future<User> getUser(String uid) async {
     final userData = await _db.collection('users').document(uid).get();
     return User.from(userData);
