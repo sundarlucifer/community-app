@@ -9,7 +9,6 @@ class LoginScreen extends StatelessWidget {
   _signIn(context) {
     authService.signInWithGoogle().then((u) {
       if (u != null) Navigator.pushReplacementNamed(context, HomeScreen.TAG);
-      print(u);
     });
   }
 

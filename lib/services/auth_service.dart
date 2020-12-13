@@ -8,9 +8,12 @@ class AuthService {
   final _googleSignIn = GoogleSignIn();
   final _db = Firestore.instance;
 
-  get user async {
-    FirebaseUser user = await _auth.currentUser();
-    return user;
+  User user;
+
+  get authState => _auth.currentUser();
+
+  AuthService() {
+    _auth.currentUser().then((u) => getUser(u.uid).then((val) => user = val));
   }
 
   Future<dynamic> signInWithGoogle() async {
@@ -24,8 +27,10 @@ class AuthService {
       _createUserData(authResult.user);
     else
       _updateLastSeen(authResult.user);
-    
-    return this.user;
+
+    user = await getUser(authResult.user.uid);
+
+    return user;
   }
 
   Future<void> signOut() async {
@@ -47,6 +52,11 @@ class AuthService {
         .collection('users')
         .document(user.uid)
         .setData({'last_seen': DateTime.now()}, merge: true);
+  }
+
+  updateDisplayName(String name) async {
+    _db.collection('users').document(user.uid).setData({'display_name': name},
+        merge: true).then((value) async => user = await getUser(user.uid));
   }
 
   Future<User> getUser(String uid) async {
@@ -74,16 +84,18 @@ class AuthService {
         .collection('subscriptions')
         .document(user.uid)
         .collection('events')
-        .document(eventId).setData({});
+        .document(eventId)
+        .setData({});
   }
-  
+
   Future unSubscribeEvent(String eventId) async {
     FirebaseUser user = await _auth.currentUser();
     return await _db
         .collection('subscriptions')
         .document(user.uid)
         .collection('events')
-        .document(eventId).delete();
+        .document(eventId)
+        .delete();
   }
 
   Future<List<String>> getMyEventIds() async {
@@ -95,6 +107,23 @@ class AuthService {
             .getDocuments())
         .documents;
     return docs.map<String>((e) => e.documentID).toList();
+  }
+
+  Stream<QuerySnapshot> getPosts() {
+    return _db.collection('posts').snapshots();
+  }
+
+  Future createPost(String content) async {
+    FirebaseUser user = await _auth.currentUser();
+    return await _db.collection('posts').add({
+      'content': content,
+      'time': DateTime.now(),
+      'user_id': user.uid,
+    });
+  }
+
+  deletePost(String postId) {
+    _db.collection('posts').document(postId).delete();
   }
 }
 

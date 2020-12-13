@@ -14,12 +14,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<String> myEvents = [];
+  bool _isLoading = true;
 
   getEventIds() async {
     myEvents.clear();
     myEvents.addAll(await authService.getMyEventIds());
-    setState(() => myEvents = myEvents);
-    print('Mine: ' + myEvents.toString());
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -31,58 +33,79 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.7,
-        child: MyDrawer(),
-      ),
+      drawer: MyDrawer(),
       appBar: AppBar(
         title: Text('DashBoard'),
       ),
-      body: StreamBuilder(
-        stream: authService.getEvents(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          switch (snapshot.connectionState) {
-            case ConnectionState.waiting:
-              return Center(child: CircularProgressIndicator());
-            default:
-              return ListView(
-                children: snapshot.data.documents
-                    .where((DocumentSnapshot snap) =>
-                        myEvents.contains(snap.documentID))
-                    .map((doc) => FutureBuilder(
-                          future: authService.getUser(doc.data['user_id']),
-                          builder: (context, AsyncSnapshot<User> snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.done) {
-                              final event = Event.from(doc, snapshot.data);
-                              return _buildCard(event);
-                            }
-                            return Center();
-                          },
-                        ))
-                    .toList(),
-                // snapshot.data.documents
-                //     .where((DocumentSnapshot snap) =>
-                //         myEvents.contains(snap.documentID))
-                //     .map<Widget>((DocumentSnapshot document) async {
-                //   final user =
-                //       await authService.getUser(document.data['user_id']);
-                //   final event = Event.from(document, user);
-                //   return CustomCard(event: event);
-                // }).toList(),
-              );
-          }
-        },
-      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    child: Text(
+                      'Subscibed events',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 32),
+                    ),
+                  ),
+                  StreamBuilder(
+                    stream: authService.getEvents(),
+                    builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Center(child: CircularProgressIndicator());
+                        default:
+                          var data = snapshot.data.documents.where(
+                              (DocumentSnapshot snap) =>
+                                  myEvents.contains(snap.documentID));
+                          if (!snapshot.hasData || data.length == 0)
+                            return Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Center(
+                                child: Text(
+                                  'You have no upcoming events. Subscribe to events to see them here',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            );
+                          return Column(
+                            children: data
+                                .map((doc) => FutureBuilder(
+                                      future: authService
+                                          .getUser(doc.data['user_id']),
+                                      builder: (context,
+                                          AsyncSnapshot<User> snapshot) {
+                                        if (snapshot.connectionState ==
+                                                ConnectionState.done &&
+                                            snapshot.hasData) {
+                                          final event =
+                                              Event.from(doc, snapshot.data);
+                                          return _buildCard(event);
+                                        }
+                                        return Center(
+                                            child: CircularProgressIndicator());
+                                      },
+                                    ))
+                                .toList(),
+                          );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
   Widget _buildCard(Event event) {
     return Card(
-      elevation: 8.0,
+      elevation: 2.0,
       margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 15.0),
       child: Container(
         child: Padding(
@@ -96,24 +119,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Image.network(event.photoUrl),
                   ),
                   SizedBox(width: 10.0),
-                  Text(event.userName),
+                  Text(
+                    event.userName,
+                    style: TextStyle(fontWeight: FontWeight.w400, fontSize: 24),
+                  ),
                 ],
-              ),
-              SizedBox(height: 12.0),
-              Text(
-                event.title,
-                style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.w600),
               ),
               Divider(
                 thickness: 2.0,
+              ),
+              Text(
+                event.title,
+                style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8.0),
               Text(event.content),
               SizedBox(height: 8.0),
               Text('Event date: ' + event.date.toString().substring(0, 10)),
-              Divider(
-                thickness: 2.0,
-              ),
+              SizedBox(height: 8.0),
               RaisedButton(
                 child: Text('UnSubscribe'),
                 onPressed: () => _unSubscribe(event),

@@ -50,8 +50,8 @@ class _EventsScreenState extends State<EventsScreen> {
             case ConnectionState.waiting:
               return Center(child: CircularProgressIndicator());
             default:
-              print('first: ${snapshot.data.documents.length}');
-              if (!snapshot.hasData) return Text('loading');
+              if (!snapshot.hasData || snapshot.data.documents.length == 0)
+                return Center(child: Text('No post has been created yet'));
               return ListView(
                 children: snapshot.data.documents
                     .map((doc) => FutureBuilder(
@@ -68,13 +68,6 @@ class _EventsScreenState extends State<EventsScreen> {
                           },
                         ))
                     .toList(),
-                // snapshot.data.documents
-                //     .map<Widget>((DocumentSnapshot document) async {
-                //   final user =
-                //       await authService.getUser(document.data['user_id']);
-                //   final event = Event.from(document, user);
-                //   return CustomCard(event: event);
-                // }).toList(),
               );
           }
         },
