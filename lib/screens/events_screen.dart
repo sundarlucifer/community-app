@@ -50,8 +50,8 @@ class _EventsScreenState extends State<EventsScreen> {
             case ConnectionState.waiting:
               return Center(child: CircularProgressIndicator());
             default:
-              print('first: ${snapshot.data.documents.length}');
-              if (!snapshot.hasData) return Text('loading');
+              if (!snapshot.hasData || snapshot.data.documents.length == 0)
+                return Center(child: Text('No post has been created yet'));
               return ListView(
                 children: snapshot.data.documents
                     .map((doc) => FutureBuilder(

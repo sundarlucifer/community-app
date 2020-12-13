@@ -14,12 +14,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<String> myEvents = [];
+  bool _isLoading = true;
 
   getEventIds() async {
     myEvents.clear();
     myEvents.addAll(await authService.getMyEventIds());
-    setState(() => myEvents = myEvents);
-    print('Mine: ' + myEvents.toString());
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -35,53 +37,69 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('DashBoard'),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Text(
-                'Subscibed events',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 32),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 0),
+                    child: Text(
+                      'Subscibed events',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w600, fontSize: 32),
+                    ),
+                  ),
+                  StreamBuilder(
+                    stream: authService.getEvents(),
+                    builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                          return Center(child: CircularProgressIndicator());
+                        default:
+                          var data = snapshot.data.documents.where(
+                              (DocumentSnapshot snap) =>
+                                  myEvents.contains(snap.documentID));
+                          if (!snapshot.hasData || data.length == 0)
+                            return Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Center(
+                                child: Text(
+                                  'You have no upcoming events. Subscribe to events to see them here',
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            );
+                          return Column(
+                            children: data
+                                .map((doc) => FutureBuilder(
+                                      future: authService
+                                          .getUser(doc.data['user_id']),
+                                      builder: (context,
+                                          AsyncSnapshot<User> snapshot) {
+                                        if (snapshot.connectionState ==
+                                                ConnectionState.done &&
+                                            snapshot.hasData) {
+                                          final event =
+                                              Event.from(doc, snapshot.data);
+                                          return _buildCard(event);
+                                        }
+                                        return Center(
+                                            child: CircularProgressIndicator());
+                                      },
+                                    ))
+                                .toList(),
+                          );
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
-            StreamBuilder(
-              stream: authService.getEvents(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                switch (snapshot.connectionState) {
-                  case ConnectionState.waiting:
-                    return Center(child: CircularProgressIndicator());
-                  default:
-                    return Column(
-                      children: snapshot.data.documents
-                          .where((DocumentSnapshot snap) =>
-                              myEvents.contains(snap.documentID))
-                          .map((doc) => FutureBuilder(
-                                future:
-                                    authService.getUser(doc.data['user_id']),
-                                builder:
-                                    (context, AsyncSnapshot<User> snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.done) {
-                                    final event =
-                                        Event.from(doc, snapshot.data);
-                                    return _buildCard(event);
-                                  }
-                                  return Center();
-                                },
-                              ))
-                          .toList(),
-                    );
-                }
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 

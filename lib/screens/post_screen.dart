@@ -51,10 +51,10 @@ class _PostScreenState extends State<PostScreen> {
                             if (snapshot.connectionState ==
                                     ConnectionState.done &&
                                 snapshot.hasData) {
-                              final event = Post.from(doc, snapshot.data);
-                              return _buildCard(event);
+                              final post = Post.from(doc, snapshot.data);
+                              return _buildCard(post);
                             }
-                            return Center();
+                            return Center(child: CircularProgressIndicator());
                           },
                         ))
                     .toList(),
