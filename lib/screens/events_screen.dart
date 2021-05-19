@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:community_app/models/event.dart';
-import 'package:community_app/models/user.dart';
+import 'package:community_app/models/models.dart';
 import 'package:community_app/screens/add_event_screen.dart';
 import 'package:community_app/services/auth_service.dart';
 import 'package:community_app/utils/drawer.dart';
@@ -92,6 +91,11 @@ class _EventsScreenState extends State<EventsScreen> {
                   ),
                   SizedBox(width: 10.0),
                   Text(event.userName),
+                  Spacer(),
+                  GestureDetector(
+                    child: Icon(Icons.more_vert),
+                    onTap: () => _showOptions(event),
+                  ),
                 ],
               ),
               SizedBox(height: 12.0),
@@ -125,6 +129,30 @@ class _EventsScreenState extends State<EventsScreen> {
   _subscribe(Event event) async {
     await authService.subscribeEvent(event.id);
     fetchMySubs();
+  }
+
+  _showOptions(Event event) {
+    showDialog(
+      context: context,
+      builder: (context) => SimpleDialog(
+        contentPadding: EdgeInsets.all(12),
+        children: <Widget>[
+          if (authService.user.uid == event.userId) ...[
+            FlatButton(
+              child: Text('Delete Event'),
+              onPressed: () {
+                authService.deleteEvent(event.id);
+                Navigator.pop(context);
+              },
+            ),
+            FlatButton(
+              child: Text('Edit Event - Unavailable'),
+            ),
+          ] else
+            Text('No options available for this post')
+        ],
+      ),
+    );
   }
 }
 

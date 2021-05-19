@@ -109,15 +109,19 @@ class _PostScreenState extends State<PostScreen> {
       builder: (context) => SimpleDialog(
         contentPadding: EdgeInsets.all(12),
         children: <Widget>[
-          if(authService.user.uid == post.userId)
+          if (authService.user.uid == post.userId) ...[
             FlatButton(
               child: Text('Delete post'),
               onPressed: () {
                 authService.deletePost(post.id);
                 Navigator.pop(context);
               },
-            )
-          else
+            ),
+            FlatButton(
+              child: Text('Edit Post - Unavailable'),
+              onPressed: () {},
+            ),
+          ] else
             Text('No options available for this post')
         ],
       ),

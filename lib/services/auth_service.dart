@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:community_app/models/user.dart';
+import 'package:community_app/models/models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -98,6 +98,18 @@ class AuthService {
         .delete();
   }
 
+  editEvent(String eventId, Event event) {
+    _db.collection('events').document(eventId).setData({
+      'title': event.title,
+      'content': event.content,
+      'date': Timestamp.fromDate(event.date),
+    }, merge: true);
+  }
+
+  deleteEvent(String eventId) {
+    _db.collection('events').document(eventId).delete();
+  }
+
   Future<List<String>> getMyEventIds() async {
     FirebaseUser user = await _auth.currentUser();
     List<DocumentSnapshot> docs = (await _db
@@ -120,6 +132,13 @@ class AuthService {
       'time': DateTime.now(),
       'user_id': user.uid,
     });
+  }
+
+  editPost(String postId, Post post) {
+    _db.collection('posts').document(postId).setData({
+      'content': post.content,
+      'time': DateTime.now(),
+    }, merge: true);
   }
 
   deletePost(String postId) {
